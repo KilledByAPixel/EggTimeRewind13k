@@ -4,15 +4,16 @@ Egg Time Rewind
 By Frank Force 2020
 
 
-start screen text
 
-increase multi spread
-more enemies on high diff
+make pup range bigger
+upgrade stack
 
 
 */
 
 "use strict";
+
+document.title = 'Egg Time Rewind';
 
  // strict mode
 ///////////////////////////////////////////////////////////////////////////////
@@ -33,6 +34,8 @@ let bonusGame = 0;
 let color1 = new Color(255,255,255)
 let color2 = new Color(0,0,0)
 
+let highScoreKey = 'EGG_TIME_HIGH';
+
 ///////////////////////////////////////////////////////////////////////////////
 // init
 
@@ -40,12 +43,14 @@ let specialMessage=
 `Time REWINDS when you die...
 but your PARALLEL LIVES remain.
 Break the SPACE EGG to get powerups.
-Move with mouse, wasd, dpad, touch, or gamepad.
+Control with mouse, wasd, dpad, touch, or gamepad.
+There is no ending but it gets increasingly more difficult.
 You can press R to restart.
-There is a secret game, press 1 to access!
-There is no ending but it gets incresingly more difficult.
+Press 1 to play a secret bonus game, the road ends at 1000.
 Thank you for playing my game.
 If you like it, check out my other JS13k games Bounce Back and Space Huggers.
+I also made the LittleJS Game Engine and ZzFX Sound Generator.
+Follow me on Twitter @KilledByAPixel for updates.
 `
 
 //`Hi! I'm Frank Force aka Killed By A Pixel. I made ZZFX and LittleJS use by many other JS13k Games. Thanks for playing my game!`
@@ -117,7 +122,6 @@ function Reset()
     gameMode = 1;
     playerScore = 0;
     newHighScore = 0;
-    levelEggHealth = 10;
     levelStartSeed = Date.now();
     playerGhosts = [];
     NextLevel();
@@ -174,13 +178,13 @@ function InitLevel()
 
 function UpdateFrame()
 {
+    UpdateMusic();
     if (bonusGame)
     {
         UpdateBonusGame(bonusGame);
         return;
     }
 
-    UpdateMusic();
     
     // restart if dead or won
     if (player && player.deadTimer.IsSet() && player.deadTimer > 3)
@@ -194,6 +198,7 @@ function UpdateFrame()
 
     if (KeyWasPressed(49))
     {
+        document.title = 'Hue Jumper';
         bonusGame = 1;
         ClearGameObjects();
         return;
@@ -268,7 +273,7 @@ function PreRender()
         // stars
         for(let i=100;i--;)
         {
-            setAlpha((Math.sin(i**3)/2+.5)**3/2);
+            setAlpha((Math.sin(i**3)/2+.5)**3/3);
             x.fillRect(84-((Math.sin(i**3)*999+(i+10)*levelTimer)|0)%199,22+24*Math.sin(i*i)|0,1,1);
         }
         setAlpha(1)
@@ -315,7 +320,7 @@ function DrawHud()
             DrawText(playerScore,1,1,1,0);
             setAlpha(1)
         }
-        if (powerupTimer < 3)
+        if (powerupTimer < 4)
         {
             setAlpha(Lerp(powerupTimer/4,1,0))
             DrawText(powerupText,mainCanvasSize.x-2,1,1,1);
@@ -335,9 +340,9 @@ function DrawHud()
             DrawText(subMessage,-(messageTime%1)*6,42,1,0);
         }
 
-        if (localStorage.highScore)
+        if (localStorage[highScoreKey])
         {
-            let highText = 'High:'+localStorage.highScore;
+            let highText = 'High:'+localStorage[highScoreKey];
             let X = 42 ;
             DrawText(highText,X,1,1,2);
         }
@@ -421,11 +426,13 @@ class MyGameObject extends GameObject
     
     HitEffect(scale=1)
     {
+        let c1 = color1.Clone();
+        let c2 = color2.Clone();
         let s = scale*this.size.x;
         let p = new ParticleEmitter
         (
             this.pos, s*.5, s*.2, // pos, emitter size, particle size
-            color1, color1
+            c1, c2
         );
     }
     
@@ -455,7 +462,7 @@ class Player extends MyGameObject
         this.damping = .6;
         this.isPlayer = 1;
         this.hasShot = 0;
-        this.multiShot = 1;
+        this.multiShot = 0;
         this.engines = 0;
         this.rapid = 0;
     }
@@ -488,13 +495,17 @@ class Player extends MyGameObject
                     shot = big? 2: 1;
                     PlaySound(big?9:0);
 
-                    let spread = (this.multiShot/2|0)*.5*(this.multiShot-1)
-                    let count = big ? 1 :this.multiShot;
+                    let shots = this.multiShot+1;
+                    let spread = (shots/2|0)*.5*(shots-1)
+                    let count = big ? 1 : shots;
                     for(let i = count; i--;)
                     {
                         let d = new Vector2(1,0);
                         let p = i/(count-1);
-                        d.Rotate(p*spread-spread/2);
+                        let a = p*spread-spread/2;
+                        if (shots == 2 )
+                            a = i ? -.5 : 0;
+                        d.Rotate(a);
                         //let b = big && (i == (count/2|0))
                         new Bullet(this.pos.Clone().AddXY(4/16,1/16), d, big);
                     }
@@ -512,7 +523,10 @@ class Player extends MyGameObject
         let analogControl = 0;
         if (mouseMode)
         {
-            acceleration = mousePosWorld.Clone().Subtract(this.pos).Multiply(2);
+            let targetPos = mousePosWorld.Clone();
+            if (isTouchDevice)
+                targetPos.AddXY(.25,0)
+            acceleration = targetPos.Clone().Subtract(this.pos).Multiply(2);
             acceleration = acceleration.ClampLength(1);
             //let m = .02;
             //if (acceleration.x>-m && acceleration.x<m)
@@ -569,7 +583,7 @@ class Player extends MyGameObject
         if (type == 0)
         {
             PlaySound(10);
-            this.multiShot = Min(this.multiShot+1,3);
+            ++this.multiShot;
             powerupText = '+Multi';
         }
         else if (type == 1)
@@ -591,7 +605,7 @@ class Player extends MyGameObject
             powerupText = '+Engine';
         }
 
-        if (this.multiShot > 1 && this.rapid && this.hasShield && this.engines)
+        if (this.multiShot && this.rapid && this.hasShield && this.engines)
             localStorage['OS13kTrophy,🐓,Egg Time Rewind,Cock of the Walk'] = 'Got all powerups at the same time.';
     }
     
@@ -795,7 +809,7 @@ class Bullet  extends MyGameObject
     }
     Render()
     {
-        setAlpha(this.ghost?.3:1)
+        setAlpha(!this.team? this.ghost?.3:1:(Math.sin(time*30)*.25+.5))
         super.Render();
         setAlpha(1)
     }
@@ -807,9 +821,22 @@ class Powerup extends MyGameObject
 {
     constructor(pos)
     { 
-        super(pos,0,5,.5,.2); 
-        this.type = RandInt(4);
+        super(pos,0,5,.5,.5); 
         this.damping = .9;
+
+        let types = [];
+        if (player.multiShot < 2)
+            types.push(0);
+        else if (player.rapid < 2)
+            types.push(1);
+        else if (!player.hasShield)
+            types.push(2);
+        else if (player.engines < 2)
+            types.push(3);
+        if (types.length)
+            this.type = types[RandInt(types.length)];
+        else
+            this.type = RandInt(4);
     }
 
     Update()
@@ -982,7 +1009,7 @@ class BigEgg  extends Enemy
     Destroy()
     {
         egg = 0;
-        eggTimer.Set(LevelRandom()*3+5);
+        eggTimer.Set(Rand()*3+5);
         super.Destroy();
     }
 }
@@ -1127,18 +1154,13 @@ function RestartLevel()
     levelSeed = levelStartSeed;
     levelEnemyType = -1;
     levelSpawnTimer.Set();
+    levelEggHealth = 20;
 }
 
-function SpawnEnemies(type)
+function SpawnEnemies()
 {
     if (!spawnEnemies)
         return;
-    
-    if (type < 0)
-    {
-        levelSpawnTimer.Set(3);
-        return;
-    }
    
     // spawn more enemies
     let spawnPos = cameraPos.Clone();
@@ -1146,6 +1168,10 @@ function SpawnEnemies(type)
     
     let nextSpawnTime = 0;
     let difficulty = GetDifficulty();
+
+    let spawnType = levelEnemyType;
+    if (difficulty > .9 && LevelRandom() < .4*difficulty)
+        spawnType = LevelRandom()*5|0;
 
     if (levelEnemyType == 0) // ufo
     {
@@ -1157,7 +1183,7 @@ function SpawnEnemies(type)
 
         for(let i=count;i--;)
         {
-            new BasicEnemy(spawnPos.AddXY(0,1), 0);
+            new BasicEnemy(spawnPos.AddXY(0,1), spawnType);
         }
         nextSpawnTime = 1;
     } 
@@ -1167,7 +1193,7 @@ function SpawnEnemies(type)
         let count = difficulty > .5 ? 4 : difficulty > .2 ? 3 : 2;
         count += LevelRandom()*2|0;
         for(let i=count;i--;)
-            new BasicEnemy(spawnPos.AddXY(1,0), 1);
+            new BasicEnemy(spawnPos.AddXY(1,0), spawnType);
         nextSpawnTime = count-.5;
     }
     else if (levelEnemyType == 2) // ghost
@@ -1179,7 +1205,7 @@ function SpawnEnemies(type)
         if (difficulty > .3 && LevelRandom() > .5)
             count++;
         for(let i=count;i--;)
-            new BasicEnemy(spawnPos.AddXY(1,0), 2);
+            new BasicEnemy(spawnPos.AddXY(1,LevelRandom()-.5), spawnType);
         nextSpawnTime = .5;
     } 
     else if (levelEnemyType == 3) // block
@@ -1187,6 +1213,8 @@ function SpawnEnemies(type)
         let subtype = LevelRandom()*3|0;
         if (difficulty > .5 && LevelRandom() < .2)
             subtype= 3;
+        if (difficulty > .5 && LevelRandom() < .2)
+            subtype= 4;
         spawnPos.AddXY(0,subtype<2?-2:-.5);
         let count = 4;
         if (subtype==1)
@@ -1196,11 +1224,19 @@ function SpawnEnemies(type)
             count = 3; 
             spawnPos.AddXY(0,-.5);
         }
+        if (subtype==4)
+        {
+            count = 3;
+            if (LevelRandom() < .2*difficulty)
+                ++count;
+        }
         for(let i=count;i--;)
         {
-            new BasicEnemy(spawnPos.AddXY(0,.5), 3);
+            new BasicEnemy(spawnPos.AddXY(0,.5), spawnType);
             if (subtype == 1 && i == 2)
                 spawnPos.AddXY(0,1)
+            if (subtype == 4)
+                spawnPos.AddXY(.5,-.5 + (LevelRandom()*5-3|0)*.5)
         }
         nextSpawnTime = 1;
     }
@@ -1208,6 +1244,9 @@ function SpawnEnemies(type)
     {
         spawnPos.AddXY(0,LevelRandom()*2-1);
         new BasicEnemy(spawnPos, 4);
+        if (difficulty > .5 && LevelRandom() < difficulty*.3)
+            new BasicEnemy(spawnPos.AddXY(1,(LevelRandom()*3-1|0)/2), spawnType);
+
         nextSpawnTime = .5;
     } 
     
@@ -1226,7 +1265,7 @@ function UpdateLevel()
     }
     
     if (!egg && eggTimer.Elapsed())
-        egg = new BigEgg(cameraPos.Clone().AddXY(3,LevelRandom()*2-1));
+        egg = new BigEgg(cameraPos.Clone().AddXY(3,Rand()*2-1));
 }
 
 function AddToScore(score)
@@ -1246,9 +1285,9 @@ function AddToScore(score)
            localStorage['OS13kTrophy,🐣,Egg Time Rewind,Hard Boiled'] = 'Got 500 Points';
     }
 
-    if (!localStorage.highScore || playerScore > localStorage.highScore)
+    if (!localStorage[highScoreKey] || playerScore > localStorage[highScoreKey])
     {
-        localStorage.highScore = playerScore;
+        localStorage[highScoreKey] = playerScore;
         newHighScore = 1;
     }
 }
@@ -1315,6 +1354,13 @@ function UpdateMusic()
         return;
     }
 
+    if (bonusGame)
+    {
+        gameMode = 0;
+        if (mouseWasPressed)
+            return;
+    }
+
     if (gameMode == 3)
     {
         beatCount = 0;
@@ -1329,23 +1375,26 @@ function UpdateMusic()
         let musicMode = gameMode
         let measureLength = musicMode == 1? 3 : 4;
 
-        if (musicMode == 2)
+        if (bonusGame)
+            beatTimer.Set(.1);
+        else if (musicMode == 2)
             beatTimer.Set(.1);
         else if (musicMode == 0)
             beatTimer.Set(Lerp(dif,.25, .1));
         else
             beatTimer.Set(.2);
 
-        // melody
-        if (beatCount>8 && ((beatCount%(beatCount+2)<1) || !RandInt(4)))
+        // bass
+        if (beatCount>(bonusGame?4:8) && ((beatCount%(beatCount+2)<1) || !RandInt(4)))
         {
             let scale1 = [-5,0,2,7]; // major pentatonic scale
             let scale2 = [-5,-2,0,2,4,7]; // major pentatonic scale
-            let scale = musicMode == 0 ? scale2 : scale1;
+            let scale3 = [0,3,5,7,11,12]; // minor pentatonic scale
+            let scale = bonusGame? scale3 : musicMode == 0 ? scale2 : scale1;
             let noteIndex = RandInt(scale.length)
 
             // play the note
-            let volume = .5;
+            let volume = .6;
             let note = scale[noteIndex]-12;
             let length = .2;(RandInt(2)+1)/2;
             let attack = .01
@@ -1354,10 +1403,12 @@ function UpdateMusic()
             zzfx(volume, 0, 220*2**(note/12), length, attack, 0, noise);
         }
 
+        // chords
+        if (!bonusGame)
         if (beatCount>(musicMode==0?0:24) && ((beatCount%(measureLength)==0) || !RandInt(musicMode==1? 4 : 9)))
         {
-            let scale1 = [0,4,7,10,12]; // major pentatonic scale
-            let scale2 = [0,4,10,12]; // major pentatonic scale
+            let scale1 = [0,4,5,10,12]; // major pentatonic scale
+            let scale2 = [0,4,7,12]; // major pentatonic scale
             let scale = musicMode == 0 ? scale2 : scale1;
             let noteIndex = RandInt(scale.length)
 
@@ -1368,7 +1419,7 @@ function UpdateMusic()
             let attack = .03
             let noise = .1;
 
-            if (musicMode == 1 || eggHitTimer.IsSet() && eggHitTimer < 3)
+            if (musicMode == 1 || eggHitTimer.IsSet() && eggHitTimer < 1)
                 zzfx(volume, 0, 220*2**(note/12), length, attack, 0, noise);
 
             if (musicMode == 1 && Rand() < .3)
@@ -1387,7 +1438,7 @@ function UpdateMusic()
         {
             if (beatCount%measureLength==0||!RandInt(9))
                 zzfx(.4,.2,1e3,.01,.05,.8,21,51); // ZzFX  highhat
-            if (beatCount%2==0||!RandInt(9))
+            if (beatCount%(bonusGame?3:2)==0||!RandInt(9))
                 zzfx(.5,.2,150,.02,.002,.1,1,.5,.15); // ZzFX 17553 kick
         }
     }

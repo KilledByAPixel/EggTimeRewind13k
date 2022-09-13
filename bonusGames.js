@@ -63,8 +63,10 @@ let startRandomSeed;            // save the starting seed for active use
 let nextCheckPoint;             // distance of next checkpoint
 let hueShift;                   // current hue shift for all hsl colors
 let road;                       // the list of road segments
+let timeLeftLast;
 
-let bumpTimer;
+let bumpTime;
+let HJhighScoreKey = 'HUE_JUMPER_HIGH';
 
 function StartLevel()
 { 
@@ -72,6 +74,9 @@ function StartLevel()
     // build the road with procedural generation
     /////////////////////////////////////////////////////////////////////////////////////
 
+    beatCount =0;
+    bumpTime = 0;
+    timeLeftLast = 0;
     let roadGenSectionDistanceMax = 0;          // init end of section distance
     let roadGenWidth = roadWidth;               // starting road width
     let roadGenSectionDistance = 0;             // distance left for this section
@@ -148,12 +153,12 @@ function UpdateHJ()
    
     if (!playerPos || KeyWasPressed(82))
     {
-        PlaySound(3);
+        PlaySound(4);
         StartLevel();
         mouseWasPressed = 0;
     }
 
-    let mouseX = mousePos.x/mainCanvas.width*2-1;
+    let mouseX = Clamp((mousePos.x/mainCanvas.width*2-1)*2,-1,1);
     let mouseDown = mouseIsDown;
     let mouse2Down = mouse2IsDown;
     if (mouseDown && !mouseWasPressed)
@@ -210,11 +215,11 @@ function UpdateHJ()
             playerVelocity.z *= offRoadDamping;                                     // slow down when off road
             playerPitchSpring += Math.sin(playerPos.z/99)**4/99;                    // bump when off road
 
-            if (!bumpTimer || bumpTimer > .2)
+            bumpTime += playerVelocity.z;
+            if (bumpTime > 500 && bonusGameTime)
             {
                 PlaySound(1);
-                bumpTimer = new Timer()
-                bumpTimer.Set();
+                bumpTime = 0;
             }
         }
     }
@@ -239,7 +244,7 @@ function UpdateHJ()
     
     if (playerPos.z > nextCheckPoint)          // crossed checkpoint
     {
-        PlaySound(11);
+        PlaySound(10);
         bonusGameTime += checkPointTime;                // add more time
         nextCheckPoint += checkPointDistance;  // set next checkpoint
         hueShift += 36;                        // shift hue
@@ -411,16 +416,48 @@ function UpdateHJ()
     // draw and update time
     /////////////////////////////////////////////////////////////////////////////////////
     
+    context.fillStyle = LSHA(99,0,0,.5);   // set font 
+    const playerScore = 0|playerPos.z/1e3;
+    const timeLeft = Math.ceil(bonusGameTime = Clamp(bonusGameTime - timeDelta, 0, maxTime));
     if (mouseWasPressed)
     {
-        DrawText2(Math.ceil(bonusGameTime = Clamp(bonusGameTime - timeDelta, 0, maxTime)), 19); // show and update time
+        if (timeLeft != timeLeftLast && timeLeft <= 4)
+            PlaySound(timeLeft ? 5 : 3);
+        timeLeftLast = timeLeft;
+
+        DrawText2(timeLeft, 19); // show and update time
         context.textAlign = 'right';                                        // set right alignment for distance
-        DrawText2(0|playerPos.z/1e3, c.width-19);                             // show distance
+        DrawText2(playerScore, c.width-19);                             // show distance
+
+        if (!bonusGameTime)
+        {
+            context.textAlign = 'center';        // set center alignment for title
+            DrawText2('-GAME OVER-', c.width/2, 329, 12);   // draw title text
+            DrawText2('Press R to Restart', c.width/2, 410, 8);   // draw title text
+        }
+            
     }
     else
     {
         context.textAlign = 'center';        // set center alignment for title
-        DrawText2('HUE JUMPER', c.width/2, 13);   // draw title text
+        context.fillStyle=LSHA(50,99,time*19,1);
+        DrawText2('HUE JUMPER', c.width/2, 139, 13+Math.sin(time*4)*2);   // draw title text
+        context.fillStyle = LSHA(99,0,0,.5);   // set font 
+
+        if (localStorage[HJhighScoreKey] && localStorage[HJhighScoreKey] > 0)
+        {
+            DrawText2('High Score: '+localStorage[HJhighScoreKey], c.width/2, 240, 9);   // draw title text
+        }
+
+        let Y = 500;
+        DrawText2('Jump = Left Click', c.width/2, Y, 7);
+        DrawText2('Brake = Right Click', c.width/2, Y+=80, 7);
+        DrawText2('The road ends at 1000', c.width/2, Y+=80, 7);
+    }
+
+    if (!localStorage[HJhighScoreKey] || playerScore > localStorage[HJhighScoreKey])
+    {
+        localStorage[HJhighScoreKey] = playerScore;
     }
 }
     
@@ -453,12 +490,11 @@ function DrawPoly(x1, y1, w1, x2, y2, w2, fillStyle)
 }
 
 // draw outlined hud text
-function DrawText2(text, posX, size=9) 
+function DrawText2(text, posX, posY=129, size=9) 
 {
     const context = mainCanvasContext;  // canvas 2d context
     context.font = size+'em impact';           // set font size
-    context.fillStyle = LSHA(99,0,0,.5);   // set font 
-    context.fillText(text, posX, 129);     // fill text
+    context.fillText(text, posX, posY);     // fill text
     context.lineWidth = 3;                 // line width
-    context.strokeText(text, posX, 129);   // outline text
+    context.strokeText(text, posX, posY);   // outline text
 }

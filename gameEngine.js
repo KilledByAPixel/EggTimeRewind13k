@@ -564,8 +564,8 @@ class Particle
         // get the color
         let p = Percent(this.lifeTimer.Get(), 0, this.lifeTime);
         let c = this.startColor.Clone().Lerp(this.endColor, p);
-        //c.a *= p<.1? p /.1 : 1; // fade in alpha
-        c.a = 1;
+        c.a *= p<.1? p /.1 : 1; // fade in alpha
+        //c.a = 1;
         mainCanvasContext.fillStyle=c.RGBA();
             
         // get the size
