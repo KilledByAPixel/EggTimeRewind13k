@@ -15,8 +15,8 @@ Time REWINDS when you die...
 
 This build of the game exists for learning purposes only and is not intended to be redistributed.
 
-[Made with an early version of LittleJS engine.](https://github.com/KilledByAPixel/LittleJS)
-[Sound Effects with ZzFX.](https://killedbyapixel.github.io/ZzFX/)
-[Using my broken TV shader, available on Shadertoy.](https://www.shadertoy.com/view/wslcD8)
+- [Made with an early version of LittleJS engine.](https://github.com/KilledByAPixel/LittleJS)
+- [Sound Effects with ZzFX.](https://killedbyapixel.github.io/ZzFX/)
+- [Using my broken TV shader, available on Shadertoy.](https://www.shadertoy.com/view/wslcD8)
 
 ![Space Huggers - A JS13k Game by Frank Force](/screen2.png)
