@@ -144,7 +144,7 @@ function InitLevel()
     cameraScale=2;
     levelFrame = 0;
     egg = 0;
-    eggTimer.Set(1);
+    eggTimer.Set(3);
     
     // clear everything
     if (!firstRun)
@@ -579,6 +579,7 @@ class Player extends MyGameObject
 
     GetPowerup(type)
     {
+        levelEggHealth += 15;
         powerupTimer.Set();
         if (type == 0)
         {
@@ -657,7 +658,7 @@ class Player extends MyGameObject
         if (this.hasShield)
         {
             this.hasShield = 0;
-            PlaySound(5);
+            PlaySound(6);
             this.playerDamageTimer.Set(2);
             this.shieldTimer.Set(2);
             return 0;
@@ -821,7 +822,7 @@ class Powerup extends MyGameObject
 {
     constructor(pos)
     { 
-        super(pos,0,5,.5,.5); 
+        super(pos,0,5,.5,.35); 
         this.damping = .9;
 
         let types = [];
@@ -845,6 +846,7 @@ class Powerup extends MyGameObject
         {
             // kill if offscreen
             this.Destroy();
+            eggTimer.Set();
             return;
         }
         
@@ -855,6 +857,7 @@ class Powerup extends MyGameObject
         {
             player.GetPowerup(this.type);
             this.Destroy();
+            eggTimer.Set(Rand()*3+3);
             return;
         }
         
@@ -995,7 +998,6 @@ class BigEgg  extends Enemy
     Kill()
     {
         PlaySound(7);
-        levelEggHealth += 10;
         AddToScore(10);
         
         new Powerup(this.pos.Clone());
@@ -1009,7 +1011,7 @@ class BigEgg  extends Enemy
     Destroy()
     {
         egg = 0;
-        eggTimer.Set(Rand()*3+5);
+        eggTimer.Set(1e5);
         super.Destroy();
     }
 }
@@ -1154,7 +1156,7 @@ function RestartLevel()
     levelSeed = levelStartSeed;
     levelEnemyType = -1;
     levelSpawnTimer.Set();
-    levelEggHealth = 20;
+    levelEggHealth = 10;
 }
 
 function SpawnEnemies()
