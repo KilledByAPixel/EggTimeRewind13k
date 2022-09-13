@@ -1,7 +1,5 @@
 ![Space Huggers - A JS13k Game by Frank Force](/screen1.png)
 
-## Egg Time Rewind
-
 # [PLAY EGG TIME REWIND!](https://killedbyapixel.github.io/EggTimeRewind13k)
 # [OFFICIAL JS13K BUILD](https://js13kgames.com/entries/egg-time-rewind)
 
