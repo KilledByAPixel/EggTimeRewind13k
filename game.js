@@ -827,11 +827,11 @@ class Powerup extends MyGameObject
         let types = [];
         if (player.multiShot < 2)
             types.push(0);
-        else if (player.rapid < 2)
+        if (player.rapid < 2)
             types.push(1);
-        else if (!player.hasShield)
+        if (!player.hasShield)
             types.push(2);
-        else if (player.engines < 2)
+        if (player.engines < 2)
             types.push(3);
         if (types.length)
             this.type = types[RandInt(types.length)];
