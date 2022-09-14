@@ -963,6 +963,7 @@ class BigEgg  extends Enemy
         if (this.pos.x<cameraPos.x-4)
         {
             this.Destroy();
+            eggTimer.Set(Rand()*2+2);
             return;
         }
         
@@ -1478,7 +1479,6 @@ function PlaySound(sound, p=0)
     {
         case 0: // shoot
             zzfx(.7,.05,899,.2,.02,-8,1,0,0); // ZzFX 10453
-            //zzfx(1,.1,5504,.1,.1,-30,.5,.5,.33); // ZzFX 36695
             break;
             
         case 1: // enemy hit
