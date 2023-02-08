@@ -1,4 +1,4 @@
-![Space Huggers - A JS13k Game by Frank Force](/screen1.png)
+![Egg Time Rewind - A JS13k Game by Frank Force](/screen1.png)
 
 # [PLAY EGG TIME REWIND!](https://killedbyapixel.github.io/EggTimeRewind13k)
 # [OFFICIAL JS13K BUILD](https://js13kgames.com/entries/egg-time-rewind)
@@ -19,4 +19,5 @@ This build of the game exists for learning purposes only and is not intended to 
 - [Sound Effects with ZzFX.](https://killedbyapixel.github.io/ZzFX/)
 - [Using my broken TV shader, available on Shadertoy.](https://www.shadertoy.com/view/wslcD8)
 
-![Space Huggers - A JS13k Game by Frank Force](/screen3.gif)
+![Egg Time Rewind - A JS13k Game by Frank Force](/screen3.gif)
+![Egg Time Rewind - A JS13k Game by Frank Force](/screen4.gif)
