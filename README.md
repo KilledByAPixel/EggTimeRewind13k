@@ -19,4 +19,4 @@ This build of the game exists for learning purposes only and is not intended to 
 - [Sound Effects with ZzFX.](https://killedbyapixel.github.io/ZzFX/)
 - [Using my broken TV shader, available on Shadertoy.](https://www.shadertoy.com/view/wslcD8)
 
-![Space Huggers - A JS13k Game by Frank Force](/screen2.png)
+![Space Huggers - A JS13k Game by Frank Force](/screen3.gif)
